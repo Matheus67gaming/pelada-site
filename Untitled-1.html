@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pelada dos Amigos</title>
+
+<style>
+body { margin:0; font-family: Arial; background:#0b1220; color:#fff; }
+header { background: linear-gradient(90deg,#22c55e,#16a34a); padding:25px; text-align:center; }
+nav { display:flex; justify-content:space-around; background:#020617; padding:10px; position:sticky; top:0; }
+nav a { color:#94a3b8; text-decoration:none; padding:8px; }
+nav a.active { background:#22c55e; color:#000; border-radius:8px; }
+.container { max-width:900px; margin:auto; padding:15px; }
+.card { background:#020617; padding:15px; margin:15px 0; border-radius:14px; }
+button { padding:10px; border:none; border-radius:10px; background:#22c55e; cursor:pointer; }
+input, select { padding:10px; border-radius:10px; width:100%; margin:5px 0; }
+.player { display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #1f2937; }
+.time-box { background:#0f172a; padding:12px; border-radius:12px; margin-top:10px; }
+.mvp { background:gold; color:#000; padding:5px 10px; border-radius:6px; }
+.history-item { border-bottom:1px solid #1f2937; padding:8px 0; }
+
+/* animação */
+@keyframes pop {0%{transform:scale(1)}50%{transform:scale(1.2)}100%{transform:scale(1)}}
+.pop {animation:pop 0.3s}
+
+.placar-inputs { display:flex; gap:10px; margin-top:10px; }
+.placar-inputs input { width:60px; text-align:center; }
+</style>
+</head>
+
+<body>
+<header>⚽ Pelada dos Amigos</header>
+
+<nav>
+<a href="#feed">Feed</a>
+<a href="#times">Times</a>
+<a href="#ranking">Jogadores</a>
+<a href="#stats">Stats</a>
+</nav>
+
+<div class="container">
+
+<div class="card" id="feed">
+<h2>🔥 Última Pelada</h2>
+<p id="feedInfo">Nenhuma partida registrada</p>
+</div>
+
+<div class="card" id="times">
+<h2>🔥 Times</h2>
+<button onclick="sortear()">Sortear</button>
+<div id="timesContainer"></div>
+</div>
+
+<div class="card" id="ranking">
+<h2>👥 Jogadores</h2>
+<input id="nome" placeholder="Nome">
+<select id="nivel">
+<option value="1">Iniciante</option>
+<option value="2">Bom</option>
+<option value="3">Craque</option>
+<option value="4">Monstro</option>
+</select>
+<button onclick="add()">Adicionar</button>
+<div id="lista"></div>
+</div>
+
+<div class="card" id="stats">
+<h2>🏆 Estatísticas</h2>
+<p id="mvp"></p>
+<p id="top3"></p>
+
+<!-- CONTROLE DE GOLS POR JOGADOR -->
+<p><b>👉 Registre os gols usando os botões +⚽ nos jogadores</b></p>
+
+<!-- PLACAR FINAL -->
+<div class="placar-inputs">
+<input id="placarA" type="number" placeholder="Time A">
+<input id="placarB" type="number" placeholder="Time B">
+<input id="placarC" type="number" placeholder="Time C">
+</div>
+
+<button onclick="registrarPartida()">Salvar Partida</button>
+</div>
+<h2>🏆 Estatísticas</h2>
+<p id="mvp"></p>
+<p id="top3"></p>
+
+<!-- NOVO: PLACAR -->
+<div class="placar-inputs">
+<input id="placarA" type="number" placeholder="A">
+<input id="placarB" type="number" placeholder="B">
+<input id="placarC" type="number" placeholder="C">
+</div>
+
+<button onclick="registrarPartida()">Salvar Partida</button>
+</div>
+
+<div class="card">
+<h2>📜 Histórico Completo</h2>
+<div id="historico"></div>
+</div>
+
+<!-- RESTAURADO: AGENDA -->
+<div class="card" id="agenda">
+<h2>📅 Próximos Jogos</h2>
+<p>Domingo - 7:10 </p>
+<p> Santiago </p>
+</div>
+
+<!-- RESTAURADO: GALERIA -->
+<div class="card" id="galeria">
+<h2>📸 Galeria</h2>
+<div class="gallery">
+<img src="https://via.placeholder.com/200" alt="foto">
+<img src="https://via.placeholder.com/200" alt="foto">
+<img src="https://via.placeholder.com/200" alt="foto">
+</div>
+</div>
+
+<!-- RESTAURADO: WHATSAPP -->
+<div class="card" id="grupo">
+<h2>💬 Grupo da Pelada</h2>
+<a href=" https://chat.whatsapp.com/G0mBw3AMpZe1CIi6qAISEa " target="_blank">Entrar no WhatsApp</a>
+</div>
+
+</div>
+
+<script>
+let jogadores=[];
+let historico=[];
+let ultimoTimes=[];
+
+function add(){
+let nome=document.getElementById('nome').value.trim();
+let nivel=parseInt(document.getElementById('nivel').value);
+if(!nome) return;
+
+jogadores.push({id:Date.now(),nome,nivel,gols:0});
+document.getElementById('nome').value='';
+render(); salvar();
+}
+
+function remover(id){
+jogadores=jogadores.filter(j=>j.id!==id);
+render(); salvar();
+}
+
+function render(){
+let lista=document.getElementById('lista');
+lista.innerHTML='';
+
+let ordenado=[...jogadores].sort((a,b)=>b.gols-a.gols);
+
+ordenado.forEach(j=>{
+let div=document.createElement('div');
+div.className='player';
+
+div.innerHTML=
+'<span>'+j.nome+' ⚽'+j.gols+'</span>'+
+'<div>'+
+'<button onclick="gol('+j.id+',1)">+⚽</button>'+
+'<button onclick="gol('+j.id+',-1)">-</button>'+
+'<button onclick="remover('+j.id+')">x</button>'+
+'</div>';
+
+lista.appendChild(div);
+});
+
+let melhor=ordenado[0];
+let top3=ordenado.slice(0,3).map((j,i)=> (i+1)+'. '+j.nome+' ('+j.gols+')').join(' | ');
+
+document.getElementById('mvp').innerHTML=melhor? 'Artilheiro: <span class="mvp">'+melhor.nome+' ('+melhor.gols+')</span>':'';
+document.getElementById('top3').innerText=top3;
+}
+
+function gol(id,v){
+let j=jogadores.find(p=>p.id===id);
+if(!j) return;
+j.gols+=v;
+if(j.gols<0) j.gols=0;
+
+let el=document.getElementById('stats');
+el.classList.add('pop');
+setTimeout(()=>el.classList.remove('pop'),300);
+
+render(); salvar();
+}
+
+function sortear(){
+let copia=[...jogadores].sort((a,b)=>b.nivel-a.nivel);
+let times=[[],[],[]];
+let soma=[0,0,0];
+
+copia.forEach(j=>{
+let idx=soma.indexOf(Math.min(...soma));
+if(times[idx].length<5){
+ times[idx].push(j);
+ soma[idx]+=j.nivel;
+}
+});
+
+ultimoTimes=times;
+
+let container=document.getElementById('timesContainer');
+container.innerHTML='';
+
+['Time A','Time B','Time C'].forEach((nome,i)=>{
+if(!times[i].length) return;
+let div=document.createElement('div');
+div.className='time-box';
+div.innerHTML='<b>'+nome+'</b><br>'+times[i].map(j=>j.nome).join(', ');
+container.appendChild(div);
+});
+}
+
+function registrarPartida(){
+if(!jogadores.length) return;
+
+let placar = [
+ parseInt(document.getElementById('placarA').value)||0,
+ parseInt(document.getElementById('placarB').value)||0,
+ parseInt(document.getElementById('placarC').value)||0
+];
+
+let ordenado=[...jogadores].sort((a,b)=>b.gols-a.gols);
+let artilheiro=ordenado[0];
+
+historico.unshift({
+ data:new Date().toLocaleString(),
+ artilheiro:artilheiro?.nome||'-',
+ gols:artilheiro?.gols||0,
+ times:ultimoTimes.map(t=>t.map(j=>j.nome)),
+ placar
+});
+
+jogadores.forEach(j=>j.gols=0);
+
+render();
+renderHistorico();
+salvar();
+}
+
+function renderHistorico(){
+let div=document.getElementById('historico');
+div.innerHTML='';
+
+historico.forEach(h=>{
+let el=document.createElement('div');
+el.className='history-item';
+
+let timesHTML = h.times.map((t,i)=>'Time '+(i+1)+': '+t.join(', ')+' ('+(h.placar[i]||0)+')').join('<br>');
+
+el.innerHTML =
+'<b>'+h.data+'</b><br>'+
+'🏆 '+h.artilheiro+' ('+h.gols+' gols)<br>'+
+timesHTML;
+
+ div.appendChild(el);
+});
+}
+
+function salvar(){
+try{
+localStorage.setItem('pelada',JSON.stringify({jogadores,historico}));
+}catch(e){}
+}
+
+function carregar(){
+try{
+let d=JSON.parse(localStorage.getItem('pelada')||'null');
+if(!d) return;
+jogadores=d.jogadores||[];
+historico=d.historico||[];
+render();
+renderHistorico();
+}catch(e){}
+}
+
+carregar();
+</script>
+
+</body>
+</html>
